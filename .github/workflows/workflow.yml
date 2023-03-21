@@ -15,6 +15,7 @@ jobs:
     - uses: Stockopedia/action-get-changed-files@v1
       id: get_changed
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         foldersOnly: true
         format: newline # either json, csv or newline
     - name: Echo
