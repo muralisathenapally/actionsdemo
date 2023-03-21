@@ -15,7 +15,7 @@ jobs:
       - uses: theappnest/terraform-monorepo-action@master
         id: modules
         with:
-          monitored: '.tpl, .hcl, .terraform.lock.hcl'
+          monitored: '.tf, .tpl, .hcl, .terraform.lock.hcl'
           ignore: |
             */*
             !modules/**
