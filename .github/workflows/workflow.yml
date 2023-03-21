@@ -9,26 +9,29 @@ permissions:
   contents: read
 
 jobs:
-  directories:
-    name: "Directory-changes"
+  modules:
     runs-on: ubuntu-latest
     steps:
       - uses: theappnest/terraform-monorepo-action@master
-        id: directories
-      - run: echo ${{ steps.directories.outputs.modules }}
+        id: modules
+        with:
+          monitored: '.tpl, .hcl, .terraform.lock.hcl'
+          ignore: |
+            */*
+            !modules/**
+            modules/ignored/*
     outputs:
-      dirs: ${{ steps.directories.outputs.modules }}
+      modules: ${{ steps.modules.outputs.modules }}
   
   terraform:
-    name: "Terraform"
     runs-on: ubuntu-latest
-    needs: directories
+    needs: modules
     strategy:
       matrix:
-        directories: ${{ fromJson(needs.directories.outputs.dirs) }}
+        module: ${{ fromJson(needs.modules.outputs.modules) }}
     defaults:
       run:
-        working-directory: ${{ matrix.directories }}
+        working-directory: ${{ matrix.module }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
