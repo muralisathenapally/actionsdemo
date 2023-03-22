@@ -68,17 +68,10 @@ jobs:
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          terraform plan -input=false -no-color -out=tfplan \
-          && terraform show -json tfplan > terraform.json
+          terraform plan -input=false -no-color -out=tfplan && terraform show -json tfplan > terraform.json && terraform show -no-color tf.plan > terraform.txt
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
-        
-      - name: Reformat Plan
-        if: steps.plan.outcome == 'success'
-        run: |
-          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
-          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > terraform.txt
         
       - uses: ahmadnassri/action-terraform-report@v3
         with:
