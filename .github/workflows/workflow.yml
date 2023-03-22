@@ -87,4 +87,4 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: |
-            ${{ env.PLAN }}
+            ${{ ${process.env.PLAN} }}
