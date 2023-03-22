@@ -1,5 +1,5 @@
 resource "google_storage_bucket" "auto-expire" {
-  name          = "ms-twon-no-public-access-bucke"
+  name          = "ms-twon-no-public-access-bucket"
   project = "united-lane-354904"
   location      = "US"
   force_destroy = true
