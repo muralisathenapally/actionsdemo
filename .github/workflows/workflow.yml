@@ -67,28 +67,17 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform plan -input=false -no-color -detailed-exitcode
+        run: |
+          terraform plan -lock=false -out terraform.plan \
+          && terraform show -no-color terraform.plan > terraform.text \
+          && terraform show -json terraform.plan > terraform.json
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
-
-      - name: Terraform Comment
-        if: always()
-        uses: actions/github-script@v6
-        env:
-            PLAN: "${{ steps.plan.outputs.stderr }}\n${{ steps.plan.outputs.stdout }}"
+        
+      - uses: ahmadnassri/action-terraform-report@v3
         with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-            script: |
-                 const output = ` ### Report
-
-                 #### Terraform Plan - \`${{ steps.plan-check.outputs.check }}\` - 📖
-
-                  \`\`\`${process.env.PLAN}\`\`\` `;
-
-                  github.issues.createComment({
-                      issue_number: context.issue.number,
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      body: output
-                   })
+          # tell the action the plan outputs
+          terraform-text: ${{ github.workspace }}/terraform.text
+          terraform-json: ${{ github.workspace }}/terraform.json
+          remove-stale-reports: true
