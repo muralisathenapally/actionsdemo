@@ -62,29 +62,49 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init     
 
+#       - name: Terraform Plan
+#         id: plan
+#         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#         run: |
+#           terraform plan -input=false -no-color -out=tfplan \
+#           && terraform show -no-color tfplan
+#         env:
+#           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+#         continue-on-error: true
+        
       - name: Terraform Plan
         id: plan
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'pull_request'
         run: |
-          terraform plan -input=false -no-color -out=tfplan \
-          && terraform show -no-color tfplan
+          out="$(terraform plan -no-color)"
+          out="${out//'%'/'%25'}"
+          out="${out//$'\n'/'%0A'}"
+          out="${out//$'\r'/'%0D'}"
+          echo "::set-output name=plan::$out"
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
-        
-      - name: Reformat Plan
-        if: steps.plan.outcome == 'success'
-        run: |
-          echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
-          | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt
-          
-      - name: Post Plan and Apply to GitHub PR
-        if: steps.plan.outcome == 'success'
-        uses: mshick/add-pr-comment@v1
+
+      - uses: actions/github-script@v5
+        if: github.event_name == 'pull_request'
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
-          message: |
-            ${{ ${process.env.PLAN} }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform\n
+            ${{ steps.plan.outputs.plan }}
+            \n\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
