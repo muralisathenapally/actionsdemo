@@ -68,7 +68,7 @@ jobs:
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          terraform plan -input=false -no-color -out=tfplan && terraform show -json tfplan > terraform.json && terraform show -no-color tf.plan > terraform.txt
+          terraform plan -input=false -no-color -out=tfplan && terraform show -json tfplan > /tmp/terraform.json && terraform show -no-color tf.plan > /tmp/terraform.txt
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
@@ -76,6 +76,6 @@ jobs:
       - uses: ahmadnassri/action-terraform-report@v3
         with:
           # tell the action the plan outputs
-          terraform-text: ${{ github.workspace }}/terraform.txt
-          terraform-json: ${{ github.workspace }}/terraform.json
+          terraform-text: /tmp/terraform.txt
+          terraform-json: /tmp/terraform.json
           remove-stale-reports: true
