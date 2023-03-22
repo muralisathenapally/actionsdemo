@@ -77,7 +77,6 @@ jobs:
         uses: mshick/add-pr-comment@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
           message: |
             ```
             ${{ steps.plan.outputs.stdout }}
