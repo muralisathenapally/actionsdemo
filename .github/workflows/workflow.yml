@@ -74,7 +74,7 @@ jobs:
         
       - name: Terraform Apply
         id: apply
-        run: terraform plan -no-color -input=false
+        run: terraform apply -auto-approve -input=false
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: false
