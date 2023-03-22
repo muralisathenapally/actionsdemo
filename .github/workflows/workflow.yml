@@ -67,32 +67,52 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform plan -no-color -input=false
+        run: terraform plan -input=false -no-color -out tf.plan
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
         
+      - name: Terraform Plan Show
+        id: show
+        run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
-        env:
-           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
-           script: |
-             const output = `#### Terraform Plan 🖌\`${{ steps.fmt.outcome }}\`
-             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          github-token: ${{ inputs.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const plan = fs.readFileSync("/tmp/plan.txt", "utf8");
+            const maxGitHubBodyCharacters = 65536;
 
-             <details><summary>Show Plan</summary>
+            function chunkSubstr(str, size) {
+              const numChunks = Math.ceil(str.length / size)
+              const chunks = new Array(numChunks)
+              for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+                chunks[i] = str.substr(o, size)
+              }
+              return chunks
+            }
 
-             \`\`\`\n
-             ${process.env.PLAN}
-             \`\`\`
+            // Split the Terraform plan into chunks if it's too big and can't fit into the GitHub Action
+            var plans = chunkSubstr(plan, maxGitHubBodyCharacters); 
+            for (let i = 0; i < plans.length; i++) {
+              const output = `### ${{ inputs.plan-title }} Part # ${i + 1}
+              #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+              <details><summary>Show Plan</summary>
+              \`\`\`\n
+              ${plans[i]}
+              \`\`\`
+              </details>
+              *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ inputs.working-directory }}\`, Workflow: \`${{ github.workflow }}\`*`;   
 
-             </details>
-             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-             github.rest.issues.createComment({
-               issue_number: context.issue.number,
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               body: output
-             })
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
