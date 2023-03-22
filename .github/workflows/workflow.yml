@@ -64,31 +64,17 @@ jobs:
         id: init
         run: terraform init     
 
-      - name: Plan
+      - name: Terraform Plan
         id: plan
-        run: |
-              out="$(terraform plan)"
-              out="$(echo "${out}" | grep -v "Refreshing state")"
-              out="$(echo -n "$out" | tail -c 60000)"
-              echo "::set-output name=output::$out"
-
-      - uses: actions/github-script@v5
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `Output \
-            \-
-            #### Terraform Plan 
-            <details><summary>Show Plan</summary>
-            \`\`\`terraform\n
-            ${{ steps.plan.outputs.output }}
-            \n\`\`\`
-            </details>
-            *Pusher: @${{ github.actor }};
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })  
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform plan -no-color -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
+        
+      - name: Terraform Apply
+        id: apply
+        run: terraform plan -no-color -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
