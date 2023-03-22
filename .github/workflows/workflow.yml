@@ -67,14 +67,14 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform plan -input=false -no-color -out tf.plan
+        run: terraform plan -input=false -no-color -out /tmp/tf.plan
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
         
       - name: Terraform Plan Show
         id: show
-        run: terraform show -no-color tf.plan 2>&1 > /tmp/plan.txt
+        run: terraform show -no-color /tmp/tf.plan 2>&1 > /tmp/plan.txt
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         
