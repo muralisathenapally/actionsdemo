@@ -67,17 +67,28 @@ jobs:
       - name: Terraform Plan
         id: plan
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform plan -input=false -no-color
+        run: terraform plan -input=false -no-color -detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
 
-      - name: Post Plan to GitHub PR
-        if: github.ref != 'refs/heads/main'
-        uses: mshick/add-pr-comment@v2
+      - name: Terraform Comment
+        if: always()
+        uses: actions/github-script@v2
+        env:
+            PLAN: "${{ steps.plan.outputs.stderr }}\n${{ steps.plan.outputs.stdout }}"
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          message: |
-            ```
-            ${{ steps.plan.outputs.stdout }}
-            ```
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+                 const output = ` ### Report
+
+                 #### Terraform Plan - \`${{ steps.plan-check.outputs.check }}\` - 📖
+
+                  \`\`\`${process.env.PLAN}\`\`\` `;
+
+                  github.issues.createComment({
+                      issue_number: context.issue.number,
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      body: output
+                   })
