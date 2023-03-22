@@ -74,7 +74,7 @@ jobs:
 
       - name: Terraform Comment
         if: always()
-        uses: actions/github-script@v2
+        uses: actions/github-script@v6
         env:
             PLAN: "${{ steps.plan.outputs.stderr }}\n${{ steps.plan.outputs.stdout }}"
         with:
