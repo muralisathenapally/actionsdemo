@@ -1,0 +1,61 @@
+name: 'Terraform Apply'
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+      directories: ${{ steps.transform.outputs.directories }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        base: ${{ github.ref }}
+        list-files: shell
+        filters: |
+          infra:
+            - infra/**
+    - name: transform to directories
+      id: transform
+      continue-on-error: false
+      run: |
+        folders=()
+        for f in ${{ steps.filter.outputs.infra_files }}; \
+          do \
+            echo "Adding $(dirname $f) to folders"; \
+            folders+=($(dirname $f)); \
+        done
+        unique_folders=($(printf "%s\n" "${folders[@]}" | sort -u | tr '\n' ' '))
+        echo "directories=$(jq --compact-output --null-input '$ARGS.positional' --args -- ${unique_folders[@]})" >> $GITHUB_OUTPUT
+
+  terraform:
+    needs: changes
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJSON(needs.changes.outputs.directories) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+        - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: false

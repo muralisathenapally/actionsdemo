@@ -1,8 +1,6 @@
-name: 'Terraform'
+name: 'Terraform Plan'
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
 
 permissions:
@@ -12,15 +10,10 @@ permissions:
 jobs:
   changes:
     runs-on: ubuntu-latest
-    # Required permissions
-    # permissions:
-    #   pull-requests: read
     outputs:
-      # Expose matched filters as job 'packages' output variable
       packages: ${{ steps.filter.outputs.changes }}
       directories: ${{ steps.transform.outputs.directories }}
     steps:
-    # For pull requests it's not necessary to checkout the code
     - name: Checkout
       uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2
@@ -135,11 +128,3 @@ jobs:
                 body: output
               })
             }
-        
-#       - name: Terraform Apply
-#         id: apply
-#         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#         run: terraform apply -auto-approve -input=false
-#         env:
-#           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-#         continue-on-error: false
