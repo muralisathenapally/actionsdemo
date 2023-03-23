@@ -53,7 +53,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         
-        - name: Terraform Apply
+      - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve -input=false
         env:
