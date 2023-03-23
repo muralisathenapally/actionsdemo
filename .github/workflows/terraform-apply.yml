@@ -1,25 +1,21 @@
-name: 'Terraform'
+name: 'Terraform Apply'
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   changes:
     runs-on: ubuntu-latest
-    # Required permissions
-    # permissions:
-    #   pull-requests: read
     outputs:
-      # Expose matched filters as job 'packages' output variable
       packages: ${{ steps.filter.outputs.changes }}
       directories: ${{ steps.transform.outputs.directories }}
     steps:
-    # For pull requests it's not necessary to checkout the code
     - name: Checkout
       uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2
@@ -56,26 +52,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
+        
       - name: Terraform Init
         id: init
         run: terraform init
-
-      - name: Terraform Plan
-        id: plan
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform plan -no-color -input=false
+        
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve -input=false
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        continue-on-error: true
-        
-      - name: Plan Comment
-        if: always() && github.ref != 'refs/heads/master' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
-        with:
-          commenter_type: plan
-          commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+        continue-on-error: false
