@@ -56,6 +56,9 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
         
       - name: Terraform Apply
         id: apply
