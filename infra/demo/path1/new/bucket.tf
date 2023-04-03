@@ -7,7 +7,7 @@ resource "google_storage_bucket" "auto-expire" {
   public_access_prevention = "enforced"
 }
 
-resource "google_storage_bucket" "auto-expire" {
+resource "google_storage_bucket" "auto-expire-1" {
   name          = "msqqqq-twon-no-public-access-bucket"
   project = "united-lane-354904"
   location      = "US"
