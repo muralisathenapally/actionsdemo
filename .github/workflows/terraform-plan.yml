@@ -55,15 +55,12 @@ jobs:
         id: fmt
         run: terraform fmt -check
         continue-on-error: true
-        
-      - name: Configure Git 
-        run: |
-          echo "machine github.com login muralisathenapally password ${MYTC}" > ~/.netrc
-          git config --global user.name "muralisathenapally"
-          git config --global url."https://github.com/".insteadOf "git://github.com/"
-          git config --global advice.detachedHead false
-        env:
-          GH_TOKEN: ${{ secrets.MYTC }}
+           
+      - id: private-modules
+        uses: philips-labs/terraform-private-modules-action@v1
+        with:
+          org: muralisathenapally
+          token: ${{ secrets.MYTC }}
         
       - name: Terraform Init
         id: init
