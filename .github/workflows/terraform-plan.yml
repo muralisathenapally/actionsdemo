@@ -59,7 +59,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
+          git config --global url."https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com".insteadOf https://github.com
           terraform init
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
