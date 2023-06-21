@@ -58,7 +58,9 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: |
+          git config --global url."https://muralisathenapally:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
+          terraform init
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
