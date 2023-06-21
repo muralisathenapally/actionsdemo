@@ -1,8 +1,9 @@
-resource "google_storage_bucket" "auto-expire" {
-  name          = "mt-four-no-public-access-bucket"
-  project = "united-lane-354904"
-  location      = "US"
-  force_destroy = true
-
-  public_access_prevention = "enforced"
+module "gcs_buckets" {
+  source     = "git::https://github.com/muralisathenapally/tfm.git?ref=gcs"
+  project_id  = "rare-daylight-390015"
+  names = ["msirstbtgsk", "mseconndkbtfy"]
+  versioning = {
+    first = true
+  }
 }
+
