@@ -55,12 +55,14 @@ jobs:
         id: fmt
         run: terraform fmt -check
         continue-on-error: true
-           
-      - id: private-modules
-        uses: philips-labs/terraform-private-modules-action@v1
-        with:
-          org: muralisathenapally
-          token: ${{ secrets.MYTC }}
+        
+      - name: Configure Git
+        run: |
+          git config --global user.name "muralisathenapally"
+          git config --global user.email "muralisathenapally@example.com"
+      
+      - name: Authenticate with GitHub Package Registry
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.MYTC }}" >> ~/.npmrc
         
       - name: Terraform Init
         id: init
