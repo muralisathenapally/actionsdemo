@@ -1,8 +1,9 @@
-resource "google_storage_bucket" "auto-expire" {
-  name          = "mt-four-no-public-access-bucket"
-  project = "united-lane-354904"
-  location      = "US"
-  force_destroy = true
-
-  public_access_prevention = "enforced"
+module "gcs_buckets" {
+  source     = "git::https://github.com/muralisathenapally/tfm.git?ref=artifact_registry"
+  project_id  = "united-lane-354904"
+  names = ["msfirstbkt", "mssecondbkt"]
+  versioning = {
+    first = true
+  }
 }
+
