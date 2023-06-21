@@ -52,14 +52,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+       
       - name: Authenticate with GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.MYTC }}
-        run: echo "//github.com/:_authToken=${MYTC}" >> $HOME/.git-credentials
-      
-      - name: Configure Git
-        run: git config --global credential.helper store
+        run: |
+          git config --global credential.helper store
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global user.password "${MYTC}"
         
       - name: Terraform Init
         id: init
