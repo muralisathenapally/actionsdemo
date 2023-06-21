@@ -55,10 +55,10 @@ jobs:
           
       - name: Configure Git
         env:
-          GITHUB_TOKEN: ${{ secrets.MYTC }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_ASKPASS: /usr/bin/echo
         run: |
-          git config --global credential.helper '!f() { echo "username=muralisathenapally"; echo "password=${MYTC}"; }; f'
+          git config --global credential.helper '!f() { echo "username=muralisathenapally"; echo "password=${GITHUB_TOKEN}"; }; f'
         
       - name: Terraform Init
         id: init
