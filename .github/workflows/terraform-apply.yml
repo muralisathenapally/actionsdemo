@@ -53,13 +53,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Configure Git
+      - name: Configure Git 
         run: |
-          git config --global user.name "muralisathenapally"
-          git config --global user.email "muralisathenapally@example.com"
-      
-      - name: Authenticate with GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.MYTC }}" >> ~/.npmrc
+          echo "machine github.com login muralisathenapally password ${MYTC}" > ~/.netrc
+          git config --global url."https://github.com/".insteadOf "git://github.com/"
+          git config --global advice.detachedHead false
+        env:
+          GH_TOKEN: ${{ secrets.MYTC }}
         
       - name: Terraform Init
         id: init
