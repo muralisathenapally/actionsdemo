@@ -53,13 +53,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Configure Git 
-        run: |
-          echo "machine github.com login muralisathenapally password ${MYTC}" > ~/.netrc
-          git config --global url."https://github.com/".insteadOf "git://github.com/"
-          git config --global advice.detachedHead false
+      - name: Authenticate with GitHub
         env:
-          GH_TOKEN: ${{ secrets.MYTC }}
+          GITHUB_TOKEN: ${{ secrets.MYTC }}
+        run: echo "//github.com/:_authToken=${MYTC}" >> $HOME/.git-credentials
+      
+      - name: Configure Git
+        run: git config --global credential.helper store
         
       - name: Terraform Init
         id: init
