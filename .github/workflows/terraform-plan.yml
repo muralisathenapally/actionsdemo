@@ -59,6 +59,7 @@ jobs:
       - name: Configure Git 
         run: |
           echo "machine github.com login muralisathenapally password ${MYTC}" > ~/.netrc
+          git config --global user.name "muralisathenapally"
           git config --global url."https://github.com/".insteadOf "git://github.com/"
           git config --global advice.detachedHead false
         env:
