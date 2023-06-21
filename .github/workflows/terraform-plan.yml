@@ -56,17 +56,11 @@ jobs:
         run: terraform fmt -check
         continue-on-error: true
         
-      - name: Configure Git
-        run: |
-          git config --global user.name "muralisathenapally"
-          git config --global user.email "muralisathenapally@example.com"
-      
-      - name: Authenticate with GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.MYTC }}" >> ~/.npmrc
-        
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: |
+          git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
+          terraform init
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
