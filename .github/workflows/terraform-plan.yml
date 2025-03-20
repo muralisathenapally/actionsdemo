@@ -19,25 +19,15 @@ jobs:
       - name: Identify changed files in infra directory
         id: detect_changes
         run: |
-          # Determine base branch
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BASE_BRANCH=${{ github.event.pull_request.base.ref }}
-          else
-            BASE_BRANCH=$(git branch --show-current)
-            git fetch origin $BASE_BRANCH --depth=1000 || true
-          fi
-
-          echo "Base branch: $BASE_BRANCH"
+          # Fetch full history of base branch
+          git fetch --unshallow || true
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1000 || true
 
           # Ensure base branch exists locally
-          git checkout $BASE_BRANCH || git checkout -b $BASE_BRANCH origin/$BASE_BRANCH
+          git checkout ${{ github.event.pull_request.base.ref }} || git checkout -b ${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.base.ref }}
 
           # Get changed files
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...${{ github.sha }} -- 'infra/**' || true)
-          else
-            CHANGED_FILES=$(git diff --name-only HEAD^ -- 'infra/**' || true)
-          fi
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }} -- 'infra/**' || true)
 
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "No changes detected in infra directory."
@@ -49,8 +39,9 @@ jobs:
 
           # Extract unique directories
           UNIQUE_DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n")[:-1]')
-
+          
           echo "directories=$UNIQUE_DIRS" >> $GITHUB_OUTPUT
+
 
 
 
@@ -67,6 +58,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         
       - name: Terraform fmt
         id: fmt
