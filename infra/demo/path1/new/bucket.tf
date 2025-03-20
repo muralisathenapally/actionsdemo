@@ -8,7 +8,7 @@ resource "google_storage_bucket" "auto-expire" {
 }
 
 resource "google_storage_bucket" "auto-expire-1" {
-  name          = "msqdqq-twon-no-public-access-bucket"
+  name          = "msqdq-twon-no-public-access-bucket"
   project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
