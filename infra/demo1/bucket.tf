@@ -1,6 +1,6 @@
 resource "google_storage_bucket" "auto-expire" {
-  name          = "msr-one-no-public-access-bucket"
-  project = "united-lane-354904"
+  name          = "msrth-one-no-public-access-bucket"
+  project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
 

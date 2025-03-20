@@ -1,6 +1,6 @@
 resource "google_storage_bucket" "auto-expire" {
-  name          = "msq-twon-no-public-access-bucket"
-  project = "united-lane-354904"
+  name          = "msqtps-twon-no-public-access-bucket"
+  project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
 
@@ -8,8 +8,8 @@ resource "google_storage_bucket" "auto-expire" {
 }
 
 resource "google_storage_bucket" "auto-expire-1" {
-  name          = "msqqqq-twon-no-public-access-bucket"
-  project = "united-lane-354904"
+  name          = "msqqdqq-twon-no-public-access-bucket"
+  project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
 

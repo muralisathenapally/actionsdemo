@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket  = "tetykgo76"
+    bucket  = "ahsfhasfjhndcxd"
     prefix  = "path1/new/state"
   }
 }
