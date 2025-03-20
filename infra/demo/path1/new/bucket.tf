@@ -1,5 +1,5 @@
 resource "google_storage_bucket" "auto-expire" {
-  name          = "msqtps-twon-no-public-access-bucket"
+  name          = "msqhtps-twon-no-public-access-bucket"
   project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
@@ -8,7 +8,7 @@ resource "google_storage_bucket" "auto-expire" {
 }
 
 resource "google_storage_bucket" "auto-expire-1" {
-  name          = "msqd-twon-no-public-access-bucket"
+  name          = "msqhd-twon-no-public-access-bucket"
   project = "psyched-circuit-405312"
   location      = "US"
   force_destroy = true
