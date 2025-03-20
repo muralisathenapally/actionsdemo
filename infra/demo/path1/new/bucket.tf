@@ -8,7 +8,7 @@ resource "google_storage_bucket" "auto-expire" {
 }
 
 resource "google_storage_bucket" "auto-expire-1" {
-  name          = "msqqqq-twon-no-public-access-bucket"
+  name          = "msqqdqq-twon-no-public-access-bucket"
   project = "united-lane-354904"
   location      = "US"
   force_destroy = true
