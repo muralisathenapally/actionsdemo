@@ -67,7 +67,11 @@ jobs:
 
       - name: Terragrunt Plan
         id: plan
-        run: terragrunt plan 
+        run: |
+          terragrunt plan | tee plan.out
+          echo "stdout<<EOF" >> $GITHUB_OUTPUT
+          cat plan.out >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
@@ -75,7 +79,7 @@ jobs:
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         env:
-          PLAN: "terragrunt\n${{ steps.plan.outputs.stdout }}"
+          PLAN: "${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -85,19 +89,21 @@ jobs:
               issue_number: context.issue.number,
             })
 
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Terragrunt Plan')
-            })
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Terragrunt Plan')
+            )
 
             const output = `#### Terragrunt Plan 📖 \`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
-            \`\`\`${process.env.PLAN}\`\`\`
+            \`\`\`
+            ${process.env.PLAN}
+            \`\`\`
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Directory: \`${{ matrix.directory }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Directory: \`${{ matrix.directory }}\`*`;
 
             if (botComment) {
               await github.rest.issues.updateComment({
@@ -114,4 +120,5 @@ jobs:
                 body: output
               })
             }
+
 
