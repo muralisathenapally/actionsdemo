@@ -1,0 +1,129 @@
+name: 'Terragrunt Plan'
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      directories: ${{ steps.detect_changes.outputs.directories }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Identify changed files in infra directory
+        id: detect_changes
+        run: |
+          git fetch --unshallow || true
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1000 || true
+
+          git checkout ${{ github.event.pull_request.base.ref }} || git checkout -b ${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.base.ref }}
+
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }} -- 'infra/**' || true)
+
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No changes detected in infra directory."
+            echo "directories=[]" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed files: $CHANGED_FILES"
+
+          UNIQUE_DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          echo "directories=$UNIQUE_DIRS" >> $GITHUB_OUTPUT
+
+  terragrunt:
+    needs: changes
+    name: "Terragrunt"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJSON(needs.changes.outputs.directories) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+    steps:
+      - uses: actions/checkout@v3
+
+      # Install Terragrunt
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION="0.87.0"
+          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+
+      # Validate HCL format
+      - name: Terragrunt HCL Lint
+        id: fmt
+        run: terragrunt hclfmt --terragrunt-working-dir . --terragrunt-non-interactive
+        continue-on-error: true
+
+      - name: Terragrunt Init
+        id: init
+        run: |
+          git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
+          terragrunt init --terragrunt-non-interactive
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Terragrunt Validate
+        id: validate
+        run: terragrunt validate --terragrunt-non-interactive
+
+      - name: Terragrunt Plan
+        id: plan
+        run: terragrunt plan -no-color --terragrunt-non-interactive
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
+
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terragrunt\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terragrunt Format and Style')
+            })
+
+            const output = `#### Terragrunt Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terragrunt Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terragrunt Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            #### Terragrunt Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`${process.env.PLAN}\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
