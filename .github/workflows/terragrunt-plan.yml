@@ -85,6 +85,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const dir = process.env.MATRIX_DIRECTORY || "${{ matrix.directory }}";
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -92,10 +94,10 @@ jobs:
             })
 
             const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && comment.body.includes('Terragrunt Plan')
+              comment.user.type === 'Bot' && comment.body.includes(`Terragrunt Plan (${dir})`)
             )
 
-            const output = `#### Terragrunt Plan 📖 \`${{ steps.plan.outcome }}\`
+            const output = `#### Terragrunt Plan 📖 (${dir}) \`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
@@ -105,7 +107,7 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Directory: \`${{ matrix.directory }}\`*`;
+            *Pusher: @${{ github.actor }}, Directory: \`${dir}\`*`;
 
             if (botComment) {
               await github.rest.issues.updateComment({
