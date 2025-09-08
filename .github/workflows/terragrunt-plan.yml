@@ -84,22 +84,12 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
             })
+
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Terragrunt Format and Style')
+              return comment.user.type === 'Bot' && comment.body.includes('Terragrunt Plan')
             })
 
-            const output = `#### Terragrunt Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terragrunt Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terragrunt Validation 🤖\`${{ steps.validate.outcome }}\`
-            <details><summary>Validation Output</summary>
-
-            \`\`\`\n
-            ${{ steps.validate.outputs.stdout }}
-            \`\`\`
-
-            </details>
-
-            #### Terragrunt Plan 📖\`${{ steps.plan.outcome }}\`
+            const output = `#### Terragrunt Plan 📖 \`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
@@ -107,11 +97,21 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Directory: \`${{ matrix.directory }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
