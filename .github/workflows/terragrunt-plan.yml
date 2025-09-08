@@ -53,7 +53,7 @@ jobs:
       - name: Install Terragrunt
         uses: gruntwork-io/terragrunt-action@v3
         with:
-           tg_version: '0.870'
+           tg_version: '0.87.0'
            tofu_version: '1.10.3'
 
       - name: Terragrunt Init
