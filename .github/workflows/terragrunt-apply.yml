@@ -1,0 +1,76 @@
+name: 'Terragrunt Plan'
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      directories: ${{ steps.detect_changes.outputs.directories }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Identify changed files in infra directory
+        id: detect_changes
+        run: |
+          git fetch --unshallow || true
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1000 || true
+
+          git checkout ${{ github.event.pull_request.base.ref }} || git checkout -b ${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.base.ref }}
+
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }} -- 'infra/**' || true)
+
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No changes detected in infra directory."
+            echo "directories=[]" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed files: $CHANGED_FILES"
+
+          UNIQUE_DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          echo "directories=$UNIQUE_DIRS" >> $GITHUB_OUTPUT
+
+  terragrunt:
+    needs: changes
+    name: "Terragrunt"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJSON(needs.changes.outputs.directories) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Terragrunt
+        uses: gruntwork-io/terragrunt-action@v3
+        with:
+           tg_version: '0.87.0'
+           tofu_version: '1.10.3'
+
+      - name: Terragrunt Init
+        id: init
+        run: |
+          git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
+          terragrunt init --backend-bootstrap --non-interactive
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: false
+
+      - name: Terragrunt Apply
+        id: apply
+        run: |
+          terragrunt run --all --non-interactive apply
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: false
