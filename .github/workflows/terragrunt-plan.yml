@@ -68,7 +68,9 @@ jobs:
       - name: Terragrunt Plan
         id: plan
         run: |
-          terragrunt plan | tee plan.out
+          terragrunt plan -no-color --non-interactive | tee plan_raw.out
+          # Remove unwanted control characters
+          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
           echo "stdout<<EOF" >> $GITHUB_OUTPUT
           cat plan.out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
