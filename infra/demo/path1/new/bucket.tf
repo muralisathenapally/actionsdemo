@@ -1,3 +1,4 @@
+/*
 terraform {
   source = "../../../../modules/gcs"
 }
@@ -9,3 +10,4 @@ inputs = {
   force_destroy           = true
   public_access_prevention = "enforced"
 }
+*/
