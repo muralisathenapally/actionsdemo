@@ -63,9 +63,12 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/
 
+      # Verify both versions
       - name: Check versions
         run: |
+          which terraform
           terraform version
+          which terragrunt
           terragrunt --version
 
       # Validate HCL format
