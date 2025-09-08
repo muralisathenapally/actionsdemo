@@ -50,32 +50,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.13.1
-
-      # Install a fixed Terragrunt version
       - name: Install Terragrunt
-        run: |
-          TG_VERSION="0.87.0"
-          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64
-          chmod +x terragrunt
-          sudo mv terragrunt /usr/local/bin/
-
-      # Verify both versions
-      - name: Check versions
-        run: |
-          which terraform
-          terraform version
-          which terragrunt
-          terragrunt --version
-
-      # Validate HCL format
-      - name: Terragrunt HCL Lint
-        id: fmt
-        run: terragrunt hclfmt --terragrunt-working-dir . --terragrunt-non-interactive
-        continue-on-error: true
+        uses: gruntwork-io/terragrunt-action@v3
 
       - name: Terragrunt Init
         id: init
@@ -85,10 +61,6 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: true
-
-      - name: Terragrunt Validate
-        id: validate
-        run: terragrunt validate --terragrunt-non-interactive
 
       - name: Terragrunt Plan
         id: plan
