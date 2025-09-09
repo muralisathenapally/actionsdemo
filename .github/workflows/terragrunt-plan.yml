@@ -88,7 +88,7 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
+        if: always()  # <-- ensures comment runs even if plan/init fails
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
           ERROR: "${{ steps.plan.outputs.stderr }}"
@@ -135,3 +135,4 @@ jobs:
                 body: output
               });
             }
+
