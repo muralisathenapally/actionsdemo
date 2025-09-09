@@ -68,6 +68,7 @@ jobs:
       - name: Terragrunt Plan
         id: plan
         run: |
+          set -o pipefail
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
           # Remove unwanted control characters
           sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
@@ -76,10 +77,9 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        continue-on-error: true
 
       - uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
+        if: always()   # always run, even if plan failed
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
         with:
@@ -124,5 +124,6 @@ jobs:
                 body: output
               })
             }
+
 
 
