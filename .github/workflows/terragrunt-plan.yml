@@ -68,57 +68,46 @@ jobs:
       - name: Terragrunt Plan
         id: plan
         run: |
-          set -o pipefail
-          terragrunt plan -no-color --non-interactive \
-            > >(tee plan.out) \
-            2> >(tee plan_error.out >&2)
-          
-          # Strip ANSI escape codes
-          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan.out > plan_clean.out
-          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_error.out > plan_error_clean.out
-
+          terragrunt plan -no-color --non-interactive | tee plan_raw.out
+          # Remove unwanted control characters
+          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
           echo "stdout<<EOF" >> $GITHUB_OUTPUT
-          cat plan_clean.out >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          echo "stderr<<EOF" >> $GITHUB_OUTPUT
-          cat plan_error_clean.out >> $GITHUB_OUTPUT
+          cat plan.out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        continue-on-error: true
 
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
         env:
           PLAN: "${{ steps.plan.outputs.stdout }}"
-          ERROR: "${{ steps.plan.outputs.stderr }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const dir = "${{ matrix.directory }}";
-            const outcome = "${{ steps.plan.outcome }}";
+            const dir = process.env.MATRIX_DIRECTORY || "${{ matrix.directory }}";
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-            });
+            })
 
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes(`Terragrunt Plan (${dir})`)
-            );
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes(`Terragrunt Plan (${dir})`)
+            )
 
-            let output = `#### Terragrunt Plan 📖 (${dir}) **${outcome.toUpperCase()}**\n`;
+            const output = `#### Terragrunt Plan 📖 (${dir}) \`${{ steps.plan.outcome }}\`
 
-            if (process.env.PLAN) {
-              output += `\n<details><summary>Show Plan</summary>\n\n\`\`\`\n${process.env.PLAN}\n\`\`\`\n</details>`;
-            }
+            <details><summary>Show Plan</summary>
 
-            if (outcome !== "success" && process.env.ERROR) {
-              output += `\n⚠️ **Error Output:**\n\n\`\`\`\n${process.env.ERROR}\n\`\`\``;
-            }
+            \`\`\`
+            ${process.env.PLAN}
+            \`\`\`
 
-            output += `\n\n*Pusher: @${{ github.actor }}, Directory: \`${dir}\`*`;
+            </details>
+
+            *Pusher: @${{ github.actor }}, Directory: \`${dir}\`*`;
 
             if (botComment) {
               await github.rest.issues.updateComment({
@@ -126,12 +115,14 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: output
-              });
+              })
             } else {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: output
-              });
+              })
             }
+
+
