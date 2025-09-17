@@ -46,6 +46,7 @@ jobs:
     name: "Terragrunt"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         directory: ${{ fromJSON(needs.changes.outputs.directories) }}
     defaults:
