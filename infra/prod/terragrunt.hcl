@@ -1,5 +1,5 @@
 terraform {
-  source = "../../../modules/gcs"
+  source = "../../modules/gcs"
 }
 
 inputs = {
