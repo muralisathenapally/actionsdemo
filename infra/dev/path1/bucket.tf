@@ -1,4 +1,4 @@
-resource "google_storage_bucket" "auto-expire" {
+/*resource "google_storage_bucket" "auto-expireasdf" {
   name          = "s-thr-no-public-access-bucketsdfgsdfg"
   project = "psyched-circuit-405312"
   location      = "US"
@@ -6,3 +6,4 @@ resource "google_storage_bucket" "auto-expire" {
 
   public_access_prevention = "enforced"
 }
+*/
