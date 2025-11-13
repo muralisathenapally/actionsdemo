@@ -54,7 +54,7 @@ jobs:
       - name: Determine environment
         id: env_detect
         run: |
-          ENV_NAME=$(basename "${{ matrix.directory }}")
+          ENV_NAME=$(echo "${{ matrix.directory }}" | cut -d'/' -f2)
           echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
           echo "$ENV_NAME"
         shell: bash
