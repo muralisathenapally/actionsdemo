@@ -3,7 +3,7 @@ terraform {
 }
 
 inputs = {
-  name                    = "ffr-no-publiasdfc-access-bucket"
+  name                    = "ffr-no-publiafdsgsdfc-access-bucket"
   project                 = "psyched-circuit-405312"
   location                = "US"
   force_destroy           = true

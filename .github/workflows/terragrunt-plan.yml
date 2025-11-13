@@ -67,7 +67,7 @@ jobs:
       - name: Terragrunt Init
         id: init
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name | upper)] }}
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
           terragrunt init --backend-bootstrap --non-interactive
@@ -76,8 +76,8 @@ jobs:
       - name: Terragrunt Plan
         id: plan
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name | upper)] }}
-          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name | upper)] }}
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
+          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           echo "Using project ID: $PROJECT_ID"
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
