@@ -1,10 +1,8 @@
 name: 'Terragrunt Apply'
-
 on:
   push:
     branches:
       - master
-
 permissions:
   contents: read
   pull-requests: write
@@ -21,13 +19,12 @@ jobs:
       - name: Identify changed files in infra directory
         id: detect_changes
         run: |
-          git fetch origin master --depth=2 || true
+          git fetch --unshallow || true
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1000 || true
 
-          # Compare previous state of master to new HEAD
-          BEFORE_SHA=$(git rev-parse origin/master~1)
-          AFTER_SHA=$(git rev-parse origin/master)
+          git checkout ${{ github.event.pull_request.base.ref }} || git checkout -b ${{ github.event.pull_request.base.ref }} origin/${{ github.event.pull_request.base.ref }}
 
-          CHANGED_FILES=$(git diff --name-only $BEFORE_SHA $AFTER_SHA -- 'infra/**' || true)
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }} -- 'infra/**' || true)
 
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "No changes detected in infra directory."
@@ -39,7 +36,6 @@ jobs:
 
           UNIQUE_DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n")[:-1]')
           echo "directories=$UNIQUE_DIRS" >> $GITHUB_OUTPUT
-
 
   terragrunt:
     needs: changes
@@ -55,6 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Determine environment
+        id: env_detect
+        run: |
+          ENV_NAME=$(echo "${{ matrix.directory }}" | cut -d'/' -f2)
+          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
+          echo "$ENV_NAME"
+        shell: bash
+
       - name: Install Terragrunt
         uses: gruntwork-io/terragrunt-action@v3
         with:
@@ -63,11 +67,25 @@ jobs:
 
       - name: Terragrunt Init
         id: init
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
           terragrunt init --backend-bootstrap --non-interactive
+        continue-on-error: false
+
+      - name: Terragrunt Plan
+        id: plan
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
+          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
+        run: |
+          echo "Using project ID: $PROJECT_ID"
+          terragrunt plan -no-color --non-interactive | tee plan_raw.out
+          sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
+          echo "stdout<<EOF" >> $GITHUB_OUTPUT
+          cat plan.out >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: false
 
       - name: Terragrunt Apply
@@ -75,5 +93,6 @@ jobs:
         run: |
           terragrunt run --all --non-interactive apply
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
+          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
         continue-on-error: false
