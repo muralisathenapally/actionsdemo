@@ -51,6 +51,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Determine environment
+        id: env_detect
+        run: |
+          ENV_NAME=$(basename "${{ matrix.directory }}")
+          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Install Terragrunt
         uses: gruntwork-io/terragrunt-action@v3
         with:
@@ -59,24 +66,25 @@ jobs:
 
       - name: Terragrunt Init
         id: init
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name | upper)] }}
         run: |
           git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
           terragrunt init --backend-bootstrap --non-interactive
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: false
 
       - name: Terragrunt Plan
         id: plan
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name | upper)] }}
+          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name | upper)] }}
         run: |
+          echo "Using project ID: $PROJECT_ID"
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
-          # Remove unwanted control characters
           sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
           echo "stdout<<EOF" >> $GITHUB_OUTPUT
           cat plan.out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         continue-on-error: false
 
       - uses: actions/github-script@v6
