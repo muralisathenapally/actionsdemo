@@ -3,7 +3,7 @@ terraform {
 }
 
 inputs = {
-  name                    = "thr-no-publisdfgtgc-accgess-dbucket"
+  name                    = "thr-sfno-publisdfgtgc-accgess-dbucket"
   project                 = "psyched-circuit-405312"
   location                = "US"
   force_destroy           = true
