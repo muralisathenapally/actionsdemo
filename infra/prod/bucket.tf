@@ -1,4 +1,4 @@
-resource "google_storage_bucket" "auto-expire" {
+/*resource "google_storage_bucket" "auto-expire" {
   name          = "msrtlh-ne-no-pubglisdfgsdfgc-access-bucket"
   project = "psyched-circuit-405312"
   location      = "US"
@@ -6,4 +6,5 @@ resource "google_storage_bucket" "auto-expire" {
 
   public_access_prevention = "enforced"
 }
+*/
 ####
