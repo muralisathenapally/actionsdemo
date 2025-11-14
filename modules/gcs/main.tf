@@ -1,4 +1,4 @@
-resource "google_storage_bucket" "auto-expire" {
+resource "google_storage_bucket" "auto-expire1" {
   name          = var.name
   project       = var.project
   location      = var.location
