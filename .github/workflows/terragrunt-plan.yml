@@ -81,6 +81,8 @@ jobs:
           PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           echo "Using project ID: $PROJECT_ID"
+          export export TF_VAR_PROJECT=$PROJECT_ID
+          echo $TF_VAR_PROJECT
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
           sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
           echo "stdout<<EOF" >> $GITHUB_OUTPUT
