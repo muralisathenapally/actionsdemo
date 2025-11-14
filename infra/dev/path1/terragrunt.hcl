@@ -3,7 +3,7 @@ terraform {
 }
 
 inputs = {
-  name                    = "thr-sfno-pkublisdfgtgc-acfcgess-dbucket"
+  name                    = "sfno-murali-acfcgess-dbucket"
   location                = "US"
   force_destroy           = true
   public_access_prevention = "enforced"
