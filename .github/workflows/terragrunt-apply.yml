@@ -1,8 +1,10 @@
 name: 'Terragrunt Apply'
+
 on:
   push:
     branches:
-      - master
+      - main
+
 permissions:
   contents: read
   pull-requests: write
@@ -19,11 +21,11 @@ jobs:
       - name: Identify changed files in infra directory
         id: detect_changes
         run: |
-          git fetch origin master --depth=2 || true
+          git fetch origin main --depth=2 || true
 
-          # Compare previous state of master to new HEAD
-          BEFORE_SHA=$(git rev-parse origin/master~1)
-          AFTER_SHA=$(git rev-parse origin/master)
+          # Compare previous state of main to new HEAD
+          BEFORE_SHA=$(git rev-parse origin/main~1)
+          AFTER_SHA=$(git rev-parse origin/main)
 
           CHANGED_FILES=$(git diff --name-only $BEFORE_SHA $AFTER_SHA -- 'infra/**' || true)
 
@@ -37,6 +39,7 @@ jobs:
 
           UNIQUE_DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n")[:-1]')
           echo "directories=$UNIQUE_DIRS" >> $GITHUB_OUTPUT
+
 
   terragrunt:
     needs: changes
@@ -68,32 +71,33 @@ jobs:
 
       - name: Terragrunt Init
         id: init
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           git config --global url."https://oauth2:${{ secrets.MYTC }}@github.com".insteadOf https://github.com
           terragrunt init --backend-bootstrap --non-interactive
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
         continue-on-error: false
 
       - name: Terragrunt Plan
         id: plan
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
-          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
         run: |
           echo "Using project ID: $PROJECT_ID"
-          export export TF_VAR_project=$PROJECT_ID
+          export TF_VAR_project_id=$PROJECT_ID
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
+          # Remove unwanted control characters
           sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" plan_raw.out > plan.out
           echo "stdout<<EOF" >> $GITHUB_OUTPUT
           cat plan.out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
+          PROJECT_ID: ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }}
         continue-on-error: false
-
+      
       - name: Terragrunt Apply
         id: apply
         run: |
-          export export TF_VAR_project=$PROJECT_ID
+          export TF_VAR_project_id=$PROJECT_ID
           terragrunt run --all --non-interactive apply
         env:
           GOOGLE_CREDENTIALS: ${{ secrets[format('GOOGLE_CREDENTIALS_{0}', steps.env_detect.outputs.env_name)] }}
