@@ -21,11 +21,11 @@ jobs:
       - name: Identify changed files in infra directory
         id: detect_changes
         run: |
-          git fetch origin main --depth=2 || true
+          git fetch origin master --depth=2 || true
 
-          # Compare previous state of main to new HEAD
-          BEFORE_SHA=$(git rev-parse origin/main~1)
-          AFTER_SHA=$(git rev-parse origin/main)
+          # Compare previous state of master to new HEAD
+          BEFORE_SHA=$(git rev-parse origin/master~1)
+          AFTER_SHA=$(git rev-parse origin/master)
 
           CHANGED_FILES=$(git diff --name-only $BEFORE_SHA $AFTER_SHA -- 'infra/**' || true)
 

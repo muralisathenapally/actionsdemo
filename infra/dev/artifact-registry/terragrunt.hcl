@@ -32,7 +32,7 @@ inputs = {
       ]
     },
     {
-      repository_id   = "aifdi"
+      repository_id   = "aasdfifdi"
       repo_format = "DOCKER"
       location    = "us"
       repo_mode   = "STANDARD_REPOSITORY"
