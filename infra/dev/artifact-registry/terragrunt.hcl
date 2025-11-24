@@ -8,7 +8,7 @@ terraform {
 inputs = {
     repositories = [
     {
-      repository_id   = "test-apdi"
+      repository_id   = "tefst-apdi"
       repo_format = "DOCKER"
       location    = "us-central1"
       repo_mode   = "STANDARD_REPOSITORY"
@@ -32,7 +32,7 @@ inputs = {
       ]
     },
     {
-      repository_id   = "aidi"
+      repository_id   = "aifdi"
       repo_format = "DOCKER"
       location    = "us"
       repo_mode   = "STANDARD_REPOSITORY"
@@ -56,7 +56,7 @@ inputs = {
       ]
     },
     {
-      repository_id   = "metricdss"
+      repository_id   = "metricfdss"
       repo_format = "DOCKER"
       location    = "us"
       repo_mode   = "STANDARD_REPOSITORY"
