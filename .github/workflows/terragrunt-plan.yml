@@ -78,7 +78,7 @@ jobs:
         id: plan
         run: |
           echo "Using project ID: $PROJECT_ID"
-          #export TF_VAR_project_id=$PROJECT_ID
+          export TF_VAR_project_id=$PROJECT_ID
           echo ${{ secrets[format('GCP_PROJECT_ID_{0}', steps.env_detect.outputs.env_name)] }} | sed 's/./& /g'
           terragrunt plan -no-color --non-interactive | tee plan_raw.out
           # Remove unwanted control characters
