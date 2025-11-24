@@ -8,7 +8,7 @@ terraform {
 inputs = {
     repositories = [
     {
-      repository_id   = "flyreel-api"
+      repository_id   = "test-api"
       repo_format = "DOCKER"
       location    = "us-central1"
       repo_mode   = "STANDARD_REPOSITORY"
@@ -32,7 +32,7 @@ inputs = {
       ]
     },
     {
-      repository_id   = "ai"
+      repository_id   = "aii"
       repo_format = "DOCKER"
       location    = "us"
       repo_mode   = "STANDARD_REPOSITORY"
@@ -56,7 +56,7 @@ inputs = {
       ]
     },
     {
-      repository_id   = "metrics"
+      repository_id   = "metricss"
       repo_format = "DOCKER"
       location    = "us"
       repo_mode   = "STANDARD_REPOSITORY"
