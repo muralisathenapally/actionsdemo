@@ -42,12 +42,6 @@ jobs:
         with:
           credentials_json: ${{ env.GCP_SA_KEY }}
 
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ env.GCP_PROJECT }}
-          install_components: "gcloud-container"
-
       - name: Decide action & resolve values
         id: prep
         run: |
@@ -57,6 +51,8 @@ jobs:
           INPUT_ACTION="${{ github.event.inputs.action }}"
           INPUT_CLUSTER="${{ github.event.inputs.cluster }}"
           INPUT_NODEPOOLS="${{ github.event.inputs.nodepools }}"
+
+          gcloud version
 
           # cluster selection
           CLUSTER="$CLUSTER_DEFAULT"
