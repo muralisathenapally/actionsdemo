@@ -26,10 +26,10 @@ jobs:
 
     # Read from GitHub Environment variables (NOT secrets!)
     env:
-      CLUSTER_DEFAULT: ${{ vars.CLUSTER_DEFAULT }}
-      GKE_ZONE: ${{ vars.GKE_ZONE }}
-      GKE_REGION: ${{ vars.GKE_REGION }}
-      NODEPOOLS_DEFAULT: ${{ vars.NODEPOOLS_DEFAULT }}
+      CLUSTER_DEFAULT: ${{ env.CLUSTER_DEFAULT }}
+      GKE_ZONE: ${{ env.GKE_ZONE }}
+      GKE_REGION: ${{ env.GKE_REGION }}
+      NODEPOOLS_DEFAULT: ${{ env.NODEPOOLS_DEFAULT }}
 
       GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID_DEV }}
       GCP_SA_KEY: ${{ secrets.GOOGLE_CREDENTIALS_DEV }}
