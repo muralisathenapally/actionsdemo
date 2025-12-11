@@ -1,0 +1,170 @@
+name: "GKE scale (Fri 7PM down, Mon 7AM up)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'scaleup or scaledown'
+        required: true
+        default: 'scaledown'
+      cluster:
+        description: 'Optional override cluster name'
+        required: false
+      nodepools:
+        description: 'Optional override (ex: np1_{3},np2_{5})'
+        required: false
+
+  # Friday 7PM UTC
+  # Monday 7AM UTC
+  schedule:
+    - cron: '0 19 * * 5'
+    - cron: '0 7 * * 1'
+
+jobs:
+  gke-scale:
+    runs-on: ubuntu-latest
+
+    # Read from GitHub Environment variables (NOT secrets!)
+    env:
+      CLUSTER_DEFAULT: ${{ vars.CLUSTER_DEFAULT }}
+      GKE_ZONE: ${{ vars.GKE_ZONE }}
+      GKE_REGION: ${{ vars.GKE_REGION }}
+      NODEPOOLS_DEFAULT: ${{ vars.NODEPOOLS_DEFAULT }}
+
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID_DEV }}
+      GCP_SA_KEY: ${{ secrets.GOOGLE_CREDENTIALS_DEV }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ env.GCP_SA_KEY }}
+
+      - name: Install gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
+          install_components: "gcloud-container"
+
+      - name: Decide action & resolve values
+        id: prep
+        run: |
+          set -euo pipefail
+
+          EVENT="${{ github.event_name }}"
+          INPUT_ACTION="${{ github.event.inputs.action }}"
+          INPUT_CLUSTER="${{ github.event.inputs.cluster }}"
+          INPUT_NODEPOOLS="${{ github.event.inputs.nodepools }}"
+
+          # cluster selection
+          CLUSTER="$CLUSTER_DEFAULT"
+          if [ -n "$INPUT_CLUSTER" ]; then
+            CLUSTER="$INPUT_CLUSTER"
+          fi
+
+          if [ -z "$CLUSTER" ]; then
+            echo "CLUSTER_DEFAULT must be set in GitHub Env" >&2
+            exit 1
+          fi
+
+          # nodepool selection
+          if [ -n "$INPUT_NODEPOOLS" ]; then
+            NODEPOOLS_RAW="$INPUT_NODEPOOLS"
+          else
+            NODEPOOLS_RAW="$NODEPOOLS_DEFAULT"
+          fi
+
+          if [ -z "$NODEPOOLS_RAW" ]; then
+            echo "NODEPOOLS_DEFAULT must be set in GitHub Env" >&2
+            exit 1
+          fi
+
+          # Normalize
+          NODEPOOLS_RAW="$(echo "$NODEPOOLS_RAW" | sed 's/[[:space:]]//g' | sed 's/,$//')"
+
+          # Determine action
+          ACTION=""
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            ACTION="$INPUT_ACTION"
+          else
+            DAYNUM=$(date -u +%u)
+            if [ "$DAYNUM" = "5" ]; then
+              ACTION="scaledown"
+            elif [ "$DAYNUM" = "1" ]; then
+              ACTION="scaleup"
+            else
+              echo "Not a scheduled day. Doing nothing."
+              echo "do_nothing=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          if [ "$ACTION" != "scaleup" ] && [ "$ACTION" != "scaledown" ]; then
+            echo "Invalid action: $ACTION" >&2
+            exit 1
+          fi
+
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "cluster=$CLUSTER" >> $GITHUB_OUTPUT
+          echo "nodepools=$NODEPOOLS_RAW" >> $GITHUB_OUTPUT
+          echo "zone=$GKE_ZONE" >> $GITHUB_OUTPUT
+          echo "region=$GKE_REGION" >> $GITHUB_OUTPUT
+
+      - name: Set gcloud project
+        if: steps.prep.outputs.do_nothing != 'true'
+        run: gcloud config set project "${GCP_PROJECT}"
+
+      - name: Scale nodepools
+        if: steps.prep.outputs.do_nothing != 'true'
+        run: |
+          set -euo pipefail
+
+          ACTION="${{ steps.prep.outputs.action }}"
+          CLUSTER="${{ steps.prep.outputs.cluster }}"
+          NODEPOOLS="${{ steps.prep.outputs.nodepools }}"
+          ZONE="${{ steps.prep.outputs.zone }}"
+          REGION="${{ steps.prep.outputs.region }}"
+
+          if [ -n "$ZONE" ]; then
+            LOCATION="--zone=$ZONE"
+          elif [ -n "$REGION" ]; then
+            LOCATION="--region=$REGION"
+          else
+            echo "Set either GKE_ZONE or GKE_REGION in GitHub environment." >&2
+            exit 1
+          fi
+
+          scale_pool() {
+            pool="$1"
+            count="$2"
+            echo "Scaling $pool → $count"
+            gcloud container clusters resize "$CLUSTER" \
+              --node-pool="$pool" \
+              --num-nodes="$count" \
+              $LOCATION \
+              --project="${GCP_PROJECT}" \
+              --quiet
+          }
+
+          IFS=',' read -r -a arr <<< "$NODEPOOLS"
+          for entry in "${arr[@]}"; do
+            if echo "$entry" | grep -Eq '^[^_]+\_\{[0-9]+\}$'; then
+              name=$(echo "$entry" | sed -E 's/\_\{[0-9]+\}$//')
+              num=$(echo "$entry" | sed -E 's/^.*\_\{([0-9]+)\}$/\1/')
+            else
+              echo "Invalid nodepool format: $entry"
+              exit 1
+            fi
+
+            if [ "$ACTION" = "scaledown" ]; then
+              scale_pool "$name" 0
+            else
+              scale_pool "$name" "$num"
+            fi
+          done
+
+      - name: Done
+        if: steps.prep.outputs.do_nothing != 'true'
+        run: echo "Completed ${{ steps.prep.outputs.action }}"
