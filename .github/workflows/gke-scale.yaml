@@ -26,10 +26,9 @@ jobs:
 
     # Read from GitHub Environment variables (NOT secrets!)
     env:
-      CLUSTER_DEFAULT: ${{ env.CLUSTER_DEFAULT }}
-      GKE_ZONE: ${{ env.GKE_ZONE }}
-      GKE_REGION: ${{ env.GKE_REGION }}
-      NODEPOOLS_DEFAULT: ${{ env.NODEPOOLS_DEFAULT }}
+      CLUSTER_DEFAULT: 'cluster-1'
+      GKE_REGION: 'us-central1'
+      NODEPOOLS_DEFAULT: 'my-pool_{1}'
 
       GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID_DEV }}
       GCP_SA_KEY: ${{ secrets.GOOGLE_CREDENTIALS_DEV }}
@@ -105,7 +104,6 @@ jobs:
           echo "action=$ACTION" >> $GITHUB_OUTPUT
           echo "cluster=$CLUSTER" >> $GITHUB_OUTPUT
           echo "nodepools=$NODEPOOLS_RAW" >> $GITHUB_OUTPUT
-          echo "zone=$GKE_ZONE" >> $GITHUB_OUTPUT
           echo "region=$GKE_REGION" >> $GITHUB_OUTPUT
 
       - name: Set gcloud project
@@ -120,17 +118,8 @@ jobs:
           ACTION="${{ steps.prep.outputs.action }}"
           CLUSTER="${{ steps.prep.outputs.cluster }}"
           NODEPOOLS="${{ steps.prep.outputs.nodepools }}"
-          ZONE="${{ steps.prep.outputs.zone }}"
           REGION="${{ steps.prep.outputs.region }}"
 
-          if [ -n "$ZONE" ]; then
-            LOCATION="--zone=$ZONE"
-          elif [ -n "$REGION" ]; then
-            LOCATION="--region=$REGION"
-          else
-            echo "Set either GKE_ZONE or GKE_REGION in GitHub environment." >&2
-            exit 1
-          fi
 
           scale_pool() {
             pool="$1"
@@ -139,7 +128,7 @@ jobs:
             gcloud container clusters resize "$CLUSTER" \
               --node-pool="$pool" \
               --num-nodes="$count" \
-              $LOCATION \
+              $REGION \
               --project="${GCP_PROJECT}" \
               --quiet
           }
