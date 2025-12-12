@@ -128,7 +128,7 @@ jobs:
             gcloud container clusters resize "$CLUSTER" \
               --node-pool="$pool" \
               --num-nodes="$count" \
-              $REGION \
+              --region $REGION \
               --project="${GCP_PROJECT}" \
               --quiet
           }
