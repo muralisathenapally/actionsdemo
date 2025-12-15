@@ -39,6 +39,8 @@ jobs:
 
   terragrunt:
     needs: changes
+    environment:
+      name: dev
     name: "Terragrunt"
     runs-on: ubuntu-latest
     strategy:
