@@ -8,7 +8,7 @@ terraform {
 inputs = {
     repositories = [
     {
-      repository_id   = "tefst-apdi"
+      repository_id   = "tefst-apdiyh"
       repo_format = "DOCKER"
       location    = "us-central1"
       repo_mode   = "STANDARD_REPOSITORY"
