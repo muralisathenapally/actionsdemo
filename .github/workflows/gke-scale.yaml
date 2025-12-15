@@ -125,17 +125,15 @@ jobs:
             pool="$1"
             count="$2"
             echo "Scaling $pool → $count"
-            gcloud container clusters update CLUSTER_NAME     --enable-autoscaling \
-    --node-pool=POOL_NAME \
-    --min-nodes=MIN_NODES \
-    --max-nodes=MAX_NODES \
-    --location=CONTROL_PLANE_LOCATION
- 
-You (15 Dec 2025, 7:35 PM)
-gcloud container clusters update CLUSTER_NAME \
-    --no-enable-autoscaling \
-    --node-pool=POOL_NAME \
-    --location=CONTROL_PLANE_LOCATION
+            gcloud container clusters update "$CLUSTER"  --enable-autoscaling \
+              --node-pool="$pool" \
+              --min-nodes=0 \
+              --max-nodes=10 \
+              --location=$REGION
+
+             gcloud container clusters update "$CLUSTER"  --no-enable-autoscaling \
+              --node-pool="$pool" \
+              --location=$REGION
 
     
             gcloud container clusters resize "$CLUSTER" \
