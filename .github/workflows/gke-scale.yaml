@@ -125,16 +125,6 @@ jobs:
             pool="$1"
             count="$2"
             echo "Scaling $pool → $count"
-            gcloud container clusters update "$CLUSTER"  --enable-autoscaling \
-              --node-pool="$pool" \
-              --min-nodes=0 \
-              --max-nodes=10 \
-              --location=$REGION
-
-             gcloud container clusters update "$CLUSTER"  --no-enable-autoscaling \
-              --node-pool="$pool" \
-              --location=$REGION
-
     
             gcloud container clusters resize "$CLUSTER" \
               --node-pool="$pool" \
@@ -155,8 +145,20 @@ jobs:
             fi
 
             if [ "$ACTION" = "scaledown" ]; then
+              ## disabling autoscaling 
+              gcloud container clusters update "$CLUSTER"  --no-enable-autoscaling \
+              --node-pool="$name" \
+              --location=$REGION
+              ## scale down nodepool
               scale_pool "$name" 0
             else
+              ## enable autoscaling
+              gcloud container clusters update "$CLUSTER"  --enable-autoscaling \
+              --node-pool="$name" \
+              --min-nodes=0 \
+              --max-nodes=10 \
+              --location=$REGION
+              ##scale up nodepool
               scale_pool "$name" "$num"
             fi
           done
