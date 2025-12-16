@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       action:
+        type: choice
         description: 'scaleup or scaledown'
         required: true
+        options:
+          - scaledown
+          - scaleup
         default: 'scaledown'
       cluster:
         description: 'Optional override cluster name'
