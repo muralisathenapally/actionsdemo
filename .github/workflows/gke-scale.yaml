@@ -56,6 +56,8 @@ jobs:
           INPUT_NODEPOOLS="${{ github.event.inputs.nodepools }}"
 
           gcloud version
+          kubectl version
+          exit 1
 
           # cluster selection
           CLUSTER="$CLUSTER_DEFAULT"
