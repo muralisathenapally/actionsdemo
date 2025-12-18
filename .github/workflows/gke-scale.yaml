@@ -159,7 +159,7 @@ jobs:
 
               ## scale nginx pods to zero
               gcloud container clusters get-credentials cluster-1 --region us-central1 --project psyched-circuit-405312
-              kubectl --kubeconfig $KUBECONFIG scale deployments nginx --replicas=0
+              kubectl scale deployments nginx --replicas=0
               
               ## scale down nodepool
               scale_pool "$name" 0
