@@ -45,7 +45,7 @@ jobs:
         with:
           credentials_json: ${{ env.GCP_SA_KEY }}
           
-      - name: Set up gcloud
+      - name: Set Up Gcloud Plugin
         uses: google-github-actions/setup-gcloud@v3
         with:
           install_components: gke-gcloud-auth-plugin
