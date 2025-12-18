@@ -30,10 +30,9 @@ jobs:
 
     # Read from GitHub Environment variables (NOT secrets!)
     env:
-      env_var: ${{ vars.ENV_CONTEXT_VAR }}
-      CLUSTER_DEFAULT: 'cluster-1'
-      GKE_REGION: 'us-central1'
-      NODEPOOLS_DEFAULT: 'my-pool_{1}'
+      CLUSTER_DEFAULT: ${{ vars.CLUSTER_DEFAULT }}
+      GKE_REGION: ${{ vars.GKE_REGION }}
+      NODEPOOLS_DEFAULT: ${{ vars.NODEPOOLS_DEFAULT }}
 
       GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID_DEV }}
       GCP_SA_KEY: ${{ secrets.GOOGLE_CREDENTIALS_DEV }}
@@ -55,7 +54,6 @@ jobs:
         id: prep
         run: |
           set -euo pipefail
-          echo $env_var
           EVENT="${{ github.event_name }}"
           INPUT_ACTION="${{ github.event.inputs.action }}"
           INPUT_CLUSTER="${{ github.event.inputs.cluster }}"
