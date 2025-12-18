@@ -115,8 +115,9 @@ jobs:
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v3
         with:
-          cluster_name: "${CLUSTER}"
-          location: "${GKE_REGION}"
+          cluster_name: 'cluster-1'
+          location: 'us-central1'
+          
 
       - name: Scale nodepools
         if: steps.prep.outputs.do_nothing != 'true'
