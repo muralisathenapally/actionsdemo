@@ -50,7 +50,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          sudo apt-get update && sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
+          sudo apt-get update && sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
           EVENT="${{ github.event_name }}"
           INPUT_ACTION="${{ github.event.inputs.action }}"
