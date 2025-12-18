@@ -50,6 +50,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          gcloud components install gke-gcloud-auth-plugin
+
           EVENT="${{ github.event_name }}"
           INPUT_ACTION="${{ github.event.inputs.action }}"
           INPUT_CLUSTER="${{ github.event.inputs.cluster }}"
