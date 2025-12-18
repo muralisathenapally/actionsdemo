@@ -48,7 +48,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v3
         with:
-          project_id: "${GCP_PROJECT}"
           install_components: gke-gcloud-auth-plugin
 
       - name: Decide action & resolve values
