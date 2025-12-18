@@ -153,8 +153,8 @@ jobs:
               --location=$REGION
 
               ## scale nginx pods to zero
-              gcloud container command
-              kubectl scale deployments ingress-nginx-controller --replicas=0 -n ingress-nginx
+              gcloud container clusters get-credentials cluster-1 --region us-central1 --project psyched-circuit-405312
+              kubectl scale deployments nginx --replicas=0
               
               ## scale down nodepool
               scale_pool "$name" 0
@@ -171,8 +171,8 @@ jobs:
               scale_pool "$name" "$num"
 
               ## scale nginx pods to zero
-              gcloud container command
-              kubectl scale deployments ingress-nginx-controller --replicas=2 -n ingress-nginx
+              gcloud container clusters get-credentials cluster-1 --region us-central1 --project psyched-circuit-405312
+              kubectl scale deployments nginx --replicas=1
             fi
           done
 
